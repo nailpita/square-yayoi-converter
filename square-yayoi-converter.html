@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Square → やよい 変換ツール</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap');
+
+  :root{
+    --bg:#F6F4F1;
+    --surface:#FFFFFF;
+    --ink:#2B2320;
+    --ink-soft:#6B6058;
+    --line:#E6E0D8;
+    --accent:#B85C7A;
+    --accent-ink:#7C3A50;
+    --accent-soft:#F3E3E8;
+    --ok:#6E8A6A;
+    --ok-soft:#EAF1E7;
+    --warn:#B4632F;
+    --warn-soft:#FBEAE0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Noto Sans JP', -apple-system, sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.7;
+    padding:28px 16px 60px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+
+  header{margin-bottom:28px;}
+  .eyebrow{
+    font-family:'Zen Kaku Gothic New',sans-serif;
+    font-size:13px;
+    font-weight:700;
+    color:var(--accent-ink);
+    letter-spacing:.02em;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Zen Kaku Gothic New',sans-serif;
+    font-size:26px;
+    font-weight:700;
+    margin:0 0 10px;
+    letter-spacing:.01em;
+  }
+  .lead{color:var(--ink-soft);font-size:15px;margin:0;max-width:46ch;}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:22px;
+    margin-bottom:20px;
+  }
+
+  .steps{margin:0;padding:0;list-style:none;}
+  .steps li{
+    display:flex;
+    gap:12px;
+    padding:10px 0;
+    border-bottom:1px solid var(--line);
+    font-size:14px;
+    color:var(--ink-soft);
+  }
+  .steps li:last-child{border-bottom:none;}
+  .steps .num{
+    flex:0 0 auto;
+    width:22px;height:22px;
+    border-radius:50%;
+    background:var(--accent-soft);
+    color:var(--accent-ink);
+    font-size:12px;
+    font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+  }
+
+  .drop{
+    border:1.5px dashed var(--line);
+    border-radius:12px;
+    padding:32px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .drop.drag{border-color:var(--accent);background:var(--accent-soft);}
+  .drop input{display:none;}
+  .drop .icon{font-size:28px;margin-bottom:8px;display:block;}
+  .drop .main-text{font-weight:600;font-size:15px;margin-bottom:4px;}
+  .drop .sub-text{font-size:13px;color:var(--ink-soft);}
+
+  .filename{
+    margin-top:14px;
+    font-size:13px;
+    color:var(--ink-soft);
+    display:none;
+  }
+  .filename.show{display:block;}
+
+  .options{
+    margin-top:18px;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+  }
+  .toggle-row{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    font-size:13.5px;
+    color:var(--ink-soft);
+  }
+  .toggle-row input{margin-top:3px;}
+  .toggle-row b{color:var(--ink);font-weight:600;}
+
+  .summary{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .stat{
+    background:var(--bg);
+    border-radius:10px;
+    padding:12px 14px;
+  }
+  .stat .label{font-size:12px;color:var(--ink-soft);margin-bottom:4px;}
+  .stat .value{font-size:19px;font-weight:700;font-family:'Zen Kaku Gothic New',sans-serif;}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  th{color:var(--ink-soft);font-weight:600;font-size:11.5px;}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .table-scroll{overflow-x:auto;border-radius:8px;border:1px solid var(--line);max-height:320px;overflow-y:auto;}
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    width:100%;
+    padding:14px 18px;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    font-size:15px;
+    font-weight:600;
+    font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer;
+    margin-top:16px;
+  }
+  .btn:active{background:var(--accent-ink);}
+  .btn:disabled{background:var(--line);color:var(--ink-soft);cursor:not-allowed;}
+
+  .msg{
+    border-radius:10px;
+    padding:14px 16px;
+    font-size:13.5px;
+    margin-top:16px;
+  }
+  .msg.warn{background:var(--warn-soft);color:var(--warn);}
+  .msg.ok{background:var(--ok-soft);color:var(--ok);}
+
+  .hidden{display:none;}
+
+  footer{
+    text-align:center;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:24px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Square → やよいの青色申告</p>
+    <h1>取引CSV変換ツール</h1>
+    <p class="lead">Squareの「お取引」からエクスポートしたCSVを、やよいの青色申告オンラインに取り込める形式に変換します。すべてこの画面(ブラウザ)の中だけで処理され、データはどこにも送信されません。</p>
+  </header>
+
+  <div class="card">
+    <ul class="steps">
+      <li><span class="num">1</span><span>Squareデータで「お取引」を開き、期間を指定して「取引CSV」をエクスポート</span></li>
+      <li><span class="num">2</span><span>下のエリアにそのCSVファイルを選択</span></li>
+      <li><span class="num">3</span><span>内容を確認して「やよい用CSVをダウンロード」→ やよいの「CSVファイル取込」で読み込み</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <label class="drop" id="dropZone">
+      <input type="file" id="fileInput" accept=".csv">
+      <span class="icon">📄</span>
+      <span class="main-text">Squareの取引CSVを選択</span>
+      <span class="sub-text">タップしてファイルを選ぶか、ここにドロップ</span>
+    </label>
+    <div class="filename" id="filenameLabel"></div>
+
+    <div class="options">
+      <label class="toggle-row">
+        <input type="checkbox" id="feeToggle" checked>
+        <span><b>決済手数料を別行の出金(費用)として記帳する</b><br>オフにすると手数料は無視され、入金額のみを出力します。</span>
+      </label>
+    </div>
+  </div>
+
+  <div id="resultArea" class="hidden">
+    <div class="card">
+      <div class="summary">
+        <div class="stat"><div class="label">対象取引</div><div class="value" id="statCount">-</div></div>
+        <div class="stat"><div class="label">出力行数</div><div class="value" id="statRows">-</div></div>
+        <div class="stat"><div class="label">売上合計</div><div class="value" id="statSales">-</div></div>
+        <div class="stat"><div class="label">手数料合計</div><div class="value" id="statFees">-</div></div>
+      </div>
+
+      <div class="table-scroll">
+        <table id="previewTable">
+          <thead><tr><th>取引日</th><th>入金額</th><th>出金額</th><th>摘要</th></tr></thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+
+      <button class="btn" id="downloadBtn">やよい用CSVをダウンロード</button>
+    </div>
+  </div>
+
+  <div id="errorArea"></div>
+
+  <footer>金額や仕訳区分は必ずダウンロード後にご自身でも一度確認してください。</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const filenameLabel = document.getElementById('filenameLabel');
+const resultArea = document.getElementById('resultArea');
+const errorArea = document.getElementById('errorArea');
+const feeToggle = document.getElementById('feeToggle');
+const downloadBtn = document.getElementById('downloadBtn');
+
+let lastOutputRows = null;
+let lastRangeLabel = '';
+
+['dragover','dragleave','drop'].forEach(evt=>{
+  dropZone.addEventListener(evt, e=>{
+    e.preventDefault();
+    if(evt==='dragover') dropZone.classList.add('drag');
+    if(evt==='dragleave'||evt==='drop') dropZone.classList.remove('drag');
+  });
+});
+dropZone.addEventListener('drop', e=>{
+  const f = e.dataTransfer.files[0];
+  if(f) handleFile(f);
+});
+fileInput.addEventListener('change', e=>{
+  const f = e.target.files[0];
+  if(f) handleFile(f);
+});
+feeToggle.addEventListener('change', ()=>{
+  if(lastRawRows) processRows(lastRawRows);
+});
+
+let lastRawRows = null;
+
+function showError(msg){
+  errorArea.innerHTML = `<div class="card"><div class="msg warn">${msg}</div></div>`;
+  resultArea.classList.add('hidden');
+}
+function clearError(){ errorArea.innerHTML=''; }
+
+function handleFile(file){
+  clearError();
+  filenameLabel.textContent = file.name;
+  filenameLabel.classList.add('show');
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const buf = new Uint8Array(e.target.result);
+    let text;
+    if(buf[0]===0xFF && buf[1]===0xFE){
+      text = new TextDecoder('utf-16le').decode(buf);
+    } else if(buf[0]===0xEF && buf[1]===0xBB && buf[2]===0xBF){
+      text = new TextDecoder('utf-8').decode(buf.slice(3));
+    } else {
+      text = new TextDecoder('utf-8').decode(buf);
+    }
+
+    const parsed = Papa.parse(text, {delimiter:'\t', skipEmptyLines:false});
+    const rows = parsed.data;
+    if(!rows || rows.length < 2){
+      showError('CSVの中身を読み取れませんでした。Squareの「お取引」画面からエクスポートしたファイルか確認してください。');
+      return;
+    }
+    const header = rows[0];
+    const need = ['日付','受取合計額','手数料'];
+    const missing = need.filter(c => !header.includes(c));
+    if(missing.length){
+      showError(`このファイルには必要な列(${missing.join('、')})が見つかりませんでした。「売上サマリー」ではなく「お取引」画面からエクスポートしたCSVを選んでください。`);
+      return;
+    }
+    lastRawRows = {header, rows};
+    processRows(lastRawRows);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function yen(s){
+  if(s===undefined || s===null) return 0;
+  s = String(s).trim();
+  if(s==='' || s==='""') return 0;
+  let neg = false;
+  if(s.startsWith('(') && s.endsWith(')')){ neg=true; s=s.slice(1,-1); }
+  if(s.startsWith('-')){ neg=true; s=s.slice(1); }
+  s = s.replace(/[¥,]/g,'').trim();
+  if(s==='') return 0;
+  const v = parseInt(s,10);
+  if(isNaN(v)) return 0;
+  return neg ? -v : v;
+}
+
+const PAY_COLS = ['現金','カード','Squareギフトカード','その他','PayPay','Alipay','au PAY','d払い','メルペイ','楽天ペイ','WeChat Pay'];
+
+function processRows({header, rows}){
+  const idx = {};
+  header.forEach((h,i)=> idx[h]=i );
+
+  const withFee = feeToggle.checked;
+  const output = [];
+  let saleCount=0, salesTotal=0, feesTotal=0;
+  let minDate=null, maxDate=null;
+
+  for(let r=1; r<rows.length; r++){
+    const row = rows[r];
+    if(!row || row.length < header.length) continue;
+    const date = row[idx['日付']];
+    if(!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+
+    const dateJ = date.replace(/-/g,'/');
+    if(!minDate || date<minDate) minDate=date;
+    if(!maxDate || date>maxDate) maxDate=date;
+
+    let total = yen(row[idx['受取合計額']]);
+    const fee = Math.abs(yen(row[idx['手数料']]));
+    const isRefund = total < 0;
+    total = Math.abs(total);
+
+    const labels = [];
+    PAY_COLS.forEach(c=>{
+      if(idx[c]===undefined) return;
+      const amt = yen(row[idx[c]]);
+      if(amt > 0){
+        if(c==='カード'){
+          const ct = row[idx['カード種別']];
+          labels.push('カード' + (ct && ct!=='""' ? `(${ct})` : ''));
+        } else {
+          labels.push(c);
+        }
+      }
+    });
+    const label = labels.length ? labels.join('+') : 'Square売上';
+    const memo = isRefund ? `Square返金(${label})` : `Square売上(${label})`;
+
+    saleCount++;
+    if(isRefund){
+      output.push({date:dateJ, in:'', out:total, memo});
+      feesTotal += 0; // refunds tracked separately, not counted as fee
+    } else {
+      output.push({date:dateJ, in:total, out:'', memo});
+      salesTotal += total;
+    }
+
+    if(withFee && fee>0){
+      output.push({date:dateJ, in:'', out:fee, memo:'Square決済手数料'});
+      feesTotal += fee;
+    }
+  }
+
+  if(output.length===0){
+    showError('取引データが見つかりませんでした。期間を指定してエクスポートし直してみてください。');
+    return;
+  }
+  clearError();
+
+  lastOutputRows = output;
+  lastRangeLabel = (minDate && maxDate) ? `${minDate}_${maxDate}` : 'export';
+
+  document.getElementById('statCount').textContent = saleCount + '件';
+  document.getElementById('statRows').textContent = output.length + '行';
+  document.getElementById('statSales').textContent = '¥' + salesTotal.toLocaleString();
+  document.getElementById('statFees').textContent = withFee ? '¥' + feesTotal.toLocaleString() : '記帳しない';
+
+  const tbody = document.getElementById('previewBody');
+  tbody.innerHTML = output.map(o=>`
+    <tr>
+      <td>${o.date}</td>
+      <td class="num">${o.in!=='' ? '¥'+o.in.toLocaleString() : ''}</td>
+      <td class="num">${o.out!=='' ? '¥'+o.out.toLocaleString() : ''}</td>
+      <td>${o.memo}</td>
+    </tr>`).join('');
+
+  resultArea.classList.remove('hidden');
+}
+
+downloadBtn.addEventListener('click', ()=>{
+  if(!lastOutputRows) return;
+  const lines = ['取引日,入金額,出金額,摘要'];
+  lastOutputRows.forEach(o=>{
+    const memo = '"' + o.memo.replace(/"/g,'""') + '"';
+    lines.push([o.date, o.in, o.out, memo].join(','));
+  });
+  const csv = '\uFEFF' + lines.join('\r\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `yayoi_import_${lastRangeLabel}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+</script>
+</body>
+</html>
